@@ -17,16 +17,19 @@ class Torre(Pieza):
 class Peon(Pieza):
     def __init__(self, image,pos=0):
         Pieza.__init__(self,image,pos)
-    def move(self, new_pos):
-        if (int(self.pos[1])+1 == int(new_pos[1])):
+    def move(self, new_pos,tablero_virtual):
+        if (int(self.pos[1])-1 == new_pos[1]):
             self.pos = new_pos
+            self.rect.center=tablero_virtual[str(new_pos[0])+str(new_pos[1])]["pos"]
+        else:
+            self.rect.center=tablero_virtual[''.join(self.pos)]["pos"]
 
 class Alfil(Pieza):
     def __init__(self, image,pos=0):
         Pieza.__init__(self,image,pos)
     def move(self, new_pos):
         pos_int = int(self.pos[0])*10 + int(self.pos[1])*10
-        if ((pos_int-new_pos)%11==0 or (pos_int-new_pos)%9==0):
+        if ((pos_int-int(new_pos))%11==0 or (pos_int-int(new_pos))%9==0):
             self.pos = new_pos
 
 class Reina(Pieza):

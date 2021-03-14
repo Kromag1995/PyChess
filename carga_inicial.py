@@ -24,7 +24,7 @@ def carga_inicial():
     cargar_piezas(blancas,tablero_virtual)
     cargar_piezas(negras,tablero_virtual)
 
-    return blancas, negras, tablero_sprite, screen
+    return blancas, negras, tablero_sprite, screen, tablero_virtual
     
 def crear_tablero():
     tablero_virtual = {}
@@ -42,18 +42,18 @@ def cargar_piezas(jugador,tablero_virtual):
     if jugador.color == "blancas":
         offset = '7'
     for i in range(8):
-        pieza = Pieza(pygame.image.load(dir_piezas["peon"]).convert_alpha(),str(i+1)+offset)
+        pieza = Peon(pygame.image.load(dir_piezas["peon"]).convert_alpha(),str(i+1)+offset)
         pieza.rect.center = tablero_virtual[str(i+1)+offset]["pos"]
         tablero_virtual[str(i+1)+offset]["pieza"] = pieza
         jugador.add(pieza)
     piezas["torre_L"] = Torre(pygame.image.load(dir_piezas["torre"]).convert_alpha())
-    piezas["torre_D"] = Torre(pygame.image.load(dir_piezas["torre"]).convert_alpha())
     piezas["caballo_L"] = Caballo(pygame.image.load(dir_piezas["caballo"]).convert_alpha())
-    piezas["caballo_D"] = Caballo(pygame.image.load(dir_piezas["caballo"]).convert_alpha())
     piezas["alfil_L"] = Alfil(pygame.image.load(dir_piezas["alfil"]).convert_alpha())
-    piezas["alfil_D"] = Alfil(pygame.image.load(dir_piezas["alfil"]).convert_alpha())
     piezas["reina"] = Reina(pygame.image.load(dir_piezas["reina"]).convert_alpha())
     piezas["rey"] = Rey(pygame.image.load(dir_piezas["rey"]).convert_alpha())
+    piezas["alfil_D"] = Alfil(pygame.image.load(dir_piezas["alfil"]).convert_alpha())
+    piezas["caballo_D"] = Caballo(pygame.image.load(dir_piezas["caballo"]).convert_alpha())
+    piezas["torre_D"] = Torre(pygame.image.load(dir_piezas["torre"]).convert_alpha())
     offset = '1'
     if jugador.color == "blancas":
         offset = '8'
