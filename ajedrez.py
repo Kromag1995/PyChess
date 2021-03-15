@@ -24,7 +24,7 @@ while 1:
         if event.type == pygame.MOUSEBUTTONUP:
             if dragging:
                 dragging = False
-                sprite.move(aproximar(event.pos),tablero_virtual)
+                sprite.try_move(aproximar(event.pos),tablero_virtual)
         elif event.type == pygame.MOUSEMOTION:
             if dragging:
                 sprite.rect.center=event.pos

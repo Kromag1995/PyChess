@@ -1,3 +1,4 @@
--Implementar que las fichas se muevan como correspondem
--Codear e implemntar interaccion entre las piezas
+-Implementar que las fichas se muevan como corresponden
+    - Ahora todas las piezas tienen sus movimientos correspondientes pero falta que detecten otras piezas para comer/bloquear 
+    - hacer una funcion para calcular los posibles movimientos
 -Codear juego por turnos
