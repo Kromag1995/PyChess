@@ -30,7 +30,7 @@ def crear_tablero():
     tablero_virtual = {}
     for i in range(8):
         for j in range(8):
-            tablero_virtual[(j+1,i+1)]= {"pos": (centro_x+j*casillero_x,centro_y+i*casillero_y), "pieza": None}
+            tablero_virtual[(j+1,i+1)]= {"pos": (centro_x+j*casillero_x,centro_y+(7-i)*casillero_y), "pieza": None}
     return tablero_virtual
 
 def cargar_piezas(jugador,tablero_virtual):
@@ -38,9 +38,9 @@ def cargar_piezas(jugador,tablero_virtual):
     piezas ={}
     for i in os.scandir(os.path.join(BASE_image, jugador.color)):
         dir_piezas[i.name.split(".")[0]] = i.path
-    offset = 2
+    offset = 7
     if jugador.color == "blancas":
-        offset = 7
+        offset = 2
     for i in range(8):
         pieza = Peon(pygame.image.load(dir_piezas["peon"]).convert_alpha(),(i+1,offset))
         pieza.rect.center = tablero_virtual[(i+1,offset)]["pos"]
@@ -54,11 +54,18 @@ def cargar_piezas(jugador,tablero_virtual):
     piezas["alfil_D"] = Alfil(pygame.image.load(dir_piezas["alfil"]).convert_alpha())
     piezas["caballo_D"] = Caballo(pygame.image.load(dir_piezas["caballo"]).convert_alpha())
     piezas["torre_D"] = Torre(pygame.image.load(dir_piezas["torre"]).convert_alpha())
-    offset = 1
+    offset = 8
     if jugador.color == "blancas":
-        offset = 8
+        offset = 1
     for i, pieza in enumerate(piezas):
         piezas[pieza].rect.center = tablero_virtual[(i+1,offset)]["pos"]
         piezas[pieza].pos = (i+1,offset)
         tablero_virtual[(i+1,offset)]["pieza"] = pieza
         jugador.add(piezas[pieza])
+
+def centrar(pos):
+    casillero_x = 1860/8
+    casillero_y = int(1055/8)
+    x = pos[0]/casillero_x
+    y = pos[1]/casillero_y
+    return (math.ceil(x),9-math.ceil(y))

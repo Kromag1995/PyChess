@@ -1,18 +1,12 @@
 import os, sys, pygame, math
 from clases import *
-from carga_inicial import  carga_inicial, cargar_piezas
+from carga_inicial import  carga_inicial, cargar_piezas, centrar
 
 pygame.init()
 
 blancas, negras, tablero_sprite, screen, tablero_virtual = carga_inicial()
 dragging = False
 
-def aproximar(pos):
-    casillero_x = 1860/8
-    casillero_y = int(1055/8)
-    x = pos[0]/casillero_x
-    y = pos[1]/casillero_y
-    return (math.ceil(x),math.ceil(y))
 
 while 1:
     for event in pygame.event.get():
@@ -24,7 +18,7 @@ while 1:
         if event.type == pygame.MOUSEBUTTONUP:
             if dragging:
                 dragging = False
-                sprite.try_move(aproximar(event.pos),tablero_virtual)
+                sprite.try_move(centrar(event.pos),tablero_virtual)
         elif event.type == pygame.MOUSEMOTION:
             if dragging:
                 sprite.rect.center=event.pos

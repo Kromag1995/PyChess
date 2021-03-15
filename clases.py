@@ -1,4 +1,4 @@
-import pygame
+import pygame, math
 
 class Pieza(pygame.sprite.Sprite):
     def __init__(self, image,pos=0):
@@ -8,23 +8,63 @@ class Pieza(pygame.sprite.Sprite):
         self.pos = pos
     def move(self,new_pos,tablero_virtual, can_move):
         if can_move:
+            tablero_virtual[self.pos]["pieza"] = None
             self.rect.center=tablero_virtual[new_pos]["pos"]
             self.pos = new_pos
+            tablero_virtual[new_pos]["pieza"] = self
         else:
             self.rect.center=tablero_virtual[self.pos]["pos"]
 
 class Torre(Pieza):
     def __init__(self, image,pos=0):
         Pieza.__init__(self,image,pos)
+    def pos_moves(self, tablero_virtual):
+        moves = []
+        for i in range(self.pos[1]+1,9, 1):
+            if not tablero_virtual[(self.pos[0],i)]["pieza"] == None:
+                break
+            moves.append((self.pos[0],i))
+        for i in range(self.pos[1]-1,0, -1):
+            if not tablero_virtual[(self.pos[0],i)]["pieza"] == None:
+                break
+            moves.append((self.pos[0],i))
+        for i in range(self.pos[0]+1,9):
+            if not tablero_virtual[(i,self.pos[1])]["pieza"] == None:
+                break
+            moves.append((i,self.pos[1]))
+        for i in range(self.pos[0]-1,0,-1):
+            if not tablero_virtual[(i,self.pos[1])]["pieza"] == None:
+                break
+            moves.append((i,self.pos[1]))
+        return moves
     def try_move(self, new_pos,tablero_virtual):
-        can_move = (self.pos[1] == new_pos[1]) or (self.pos[0] == new_pos[0])
+        moves = self.pos_moves(tablero_virtual)
+        can_move = new_pos in moves
         self.move(new_pos,tablero_virtual,can_move)
 
+            
+        
 class Peon(Pieza):
     def __init__(self, image,pos=0):
         Pieza.__init__(self,image,pos)
+    def pos_moves(self, tablero_virtual):
+        moves = []
+        try:
+            if tablero_virtual[(self.pos[0]+1,self.pos[1]+1)]["pieza"]:
+                moves.append((self.pos[0]+1,self.pos[1]+1))
+        except:
+            pass
+        try:
+            if tablero_virtual[(self.pos[0]-1,self.pos[1]+1)]["pieza"]:
+                moves.append((self.pos[0]-1,self.pos[1]+1))
+        except:
+            pass
+        if None == tablero_virtual[(self.pos[0],self.pos[1]+1)]["pieza"]:
+            moves.append((self.pos[0],self.pos[1]+1))
+        return moves
     def try_move(self, new_pos,tablero_virtual):
-        can_move = (self.pos[0],self.pos[1]-1)== new_pos
+        moves = self.pos_moves(tablero_virtual)
+        can_move = new_pos in moves
         self.move(new_pos,tablero_virtual,can_move)
 
 class Alfil(Pieza):
