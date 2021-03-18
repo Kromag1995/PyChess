@@ -25,4 +25,5 @@ while 1:
     screen.blit(tablero_sprite,tablero_sprite.get_rect())
     negras.draw(screen)
     blancas.draw(screen)
+    if dragging:            sprite.show_moves(screen,tablero_virtual)
     pygame.display.flip()

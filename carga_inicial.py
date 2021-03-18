@@ -23,7 +23,8 @@ def carga_inicial():
     negras = Jugador("negras")
     cargar_piezas(blancas,tablero_virtual)
     cargar_piezas(negras,tablero_virtual)
-
+    for sprite in blancas.sprites():
+        sprite.pos_moves(tablero_virtual)
     return blancas, negras, tablero_sprite, screen, tablero_virtual
     
 def crear_tablero():
