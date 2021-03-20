@@ -15,6 +15,7 @@ while 1:
             if sprite:
                 dragging = True
                 mouse_x,mouse_y =event.pos
+                sprite.pos_moves(tablero_virtual)
         if event.type == pygame.MOUSEBUTTONUP:
             if dragging:
                 dragging = False

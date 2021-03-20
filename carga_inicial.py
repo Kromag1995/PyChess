@@ -23,8 +23,6 @@ def carga_inicial():
     negras = Jugador("negras")
     cargar_piezas(blancas,tablero_virtual)
     cargar_piezas(negras,tablero_virtual)
-    for sprite in blancas.sprites():
-        sprite.pos_moves(tablero_virtual)
     return blancas, negras, tablero_sprite, screen, tablero_virtual
     
 def crear_tablero():
@@ -61,7 +59,7 @@ def cargar_piezas(jugador,tablero_virtual):
     for i, pieza in enumerate(piezas):
         piezas[pieza].rect.center = tablero_virtual[(i+1,offset)]["pos"]
         piezas[pieza].pos = (i+1,offset)
-        tablero_virtual[(i+1,offset)]["pieza"] = pieza
+        tablero_virtual[(i+1,offset)]["pieza"] = piezas[pieza]
         jugador.add(piezas[pieza])
 
 def centrar(pos):

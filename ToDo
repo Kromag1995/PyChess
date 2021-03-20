@@ -1,5 +1,4 @@
 -Implementar que las fichas se muevan como corresponden
-    - Hacer metodo para resaltar las posiciones jugables
-    - Ahora todas las piezas tienen sus movimientos correspondientes pero falta que detecten otras piezas para comer/bloquear 
-    - hacer una funcion para calcular los posibles movimientos
+    - Implementar posiciones de hackes con sus devidas restricciones
+    - Implementar movimeintos del peon cuando no se mueve
 -Codear juego por turnos
