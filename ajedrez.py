@@ -4,9 +4,8 @@ from carga_inicial import  carga_inicial, cargar_piezas, centrar
 
 pygame.init()
 
-blancas, negras, tablero_sprite, screen, tablero_virtual = carga_inicial()
+blancas, negras, tablero_sprite, screen = carga_inicial()
 dragging = False
-
 
 while 1:
     for event in pygame.event.get():
@@ -15,16 +14,17 @@ while 1:
             if sprite:
                 dragging = True
                 mouse_x,mouse_y =event.pos
-                sprite.pos_moves(tablero_virtual)
+                sprite.pos_moves()
         if event.type == pygame.MOUSEBUTTONUP:
             if dragging:
                 dragging = False
-                sprite.try_move(centrar(event.pos),tablero_virtual)
+                sprite.try_move(centrar(event.pos), negras)
         elif event.type == pygame.MOUSEMOTION:
             if dragging:
                 sprite.rect.center=event.pos
     screen.blit(tablero_sprite,tablero_sprite.get_rect())
     negras.draw(screen)
     blancas.draw(screen)
-    if dragging:            sprite.show_moves(screen,tablero_virtual)
+    if dragging:
+        sprite.show_moves(screen)
     pygame.display.flip()

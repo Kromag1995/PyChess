@@ -19,11 +19,13 @@ def carga_inicial():
     tablero_virtual = crear_tablero()
     tablero_sprite =  pygame.image.load(os.path.join(BASE_image, "tablero.jpg")).convert()
     tablero_sprite = pygame.transform.scale(tablero_sprite, size)
-    blancas = Jugador("blancas")
+    blancas = Jugador("blancas", tablero_virtual.copy())
     negras = Jugador("negras")
-    cargar_piezas(blancas,tablero_virtual)
-    cargar_piezas(negras,tablero_virtual)
-    return blancas, negras, tablero_sprite, screen, tablero_virtual
+    cargar_piezas(blancas)
+    negras.flip_the_table(tablero_virtual)
+    cargar_piezas(negras)
+    blancas.flip_the_table(negras.tablero_virtual)
+    return blancas, negras, tablero_sprite, screen
     
 def crear_tablero():
     tablero_virtual = {}
@@ -32,18 +34,15 @@ def crear_tablero():
             tablero_virtual[(j+1,i+1)]= {"pos": (centro_x+j*casillero_x,centro_y+(7-i)*casillero_y), "pieza": None}
     return tablero_virtual
 
-def cargar_piezas(jugador,tablero_virtual):
+def cargar_piezas(jugador):
     dir_piezas = {}
     piezas ={}
     for i in os.scandir(os.path.join(BASE_image, jugador.color)):
         dir_piezas[i.name.split(".")[0]] = i.path
-    offset = 7
-    if jugador.color == "blancas":
-        offset = 2
     for i in range(8):
-        pieza = Peon(pygame.image.load(dir_piezas["peon"]).convert_alpha(),(i+1,offset))
-        pieza.rect.center = tablero_virtual[(i+1,offset)]["pos"]
-        tablero_virtual[(i+1,offset)]["pieza"] = pieza
+        pieza = Peon(pygame.image.load(dir_piezas["peon"]).convert_alpha(),(i+1,2))
+        pieza.rect.center = jugador.tablero_virtual[(i+1,2)]["pos"]
+        jugador.tablero_virtual[(i+1,2)]["pieza"] = pieza
         jugador.add(pieza)
     piezas["torre_L"] = Torre(pygame.image.load(dir_piezas["torre"]).convert_alpha())
     piezas["caballo_L"] = Caballo(pygame.image.load(dir_piezas["caballo"]).convert_alpha())
@@ -53,13 +52,10 @@ def cargar_piezas(jugador,tablero_virtual):
     piezas["alfil_D"] = Alfil(pygame.image.load(dir_piezas["alfil"]).convert_alpha())
     piezas["caballo_D"] = Caballo(pygame.image.load(dir_piezas["caballo"]).convert_alpha())
     piezas["torre_D"] = Torre(pygame.image.load(dir_piezas["torre"]).convert_alpha())
-    offset = 8
-    if jugador.color == "blancas":
-        offset = 1
     for i, pieza in enumerate(piezas):
-        piezas[pieza].rect.center = tablero_virtual[(i+1,offset)]["pos"]
-        piezas[pieza].pos = (i+1,offset)
-        tablero_virtual[(i+1,offset)]["pieza"] = piezas[pieza]
+        piezas[pieza].rect.center = jugador.tablero_virtual[(i+1,1)]["pos"]
+        piezas[pieza].pos = (i+1,1)
+        jugador.tablero_virtual[(i+1,1)]["pieza"] = piezas[pieza]
         jugador.add(piezas[pieza])
 
 def centrar(pos):
