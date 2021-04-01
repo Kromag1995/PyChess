@@ -1,7 +1,4 @@
 -Implementar que las fichas se muevan como corresponden
-    - Implementar posiciones de jaques con sus devidas restricciones
     - Implementar coronacion del peon
     - Implementar enrroque
-    - Implementar logs de los movimientos de cada jugador y que el programa lea los mismos logs y recree la partida
-
--Codear juego por turnos
+- Implementar posiciones de jaques con sus devidas restricciones

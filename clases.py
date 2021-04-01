@@ -5,7 +5,8 @@ import time
 
 class Partida():
 
-    def __init__(self):
+    def __init__(self,read_mode):
+        self.read_mode = read_mode 
         self.width = 1920
         self.height = 1080
         self.size = (self.width, self.height)
@@ -21,18 +22,13 @@ class Partida():
         self.tablero_sprite = None
         self.screen = None
         self.logger = logging.getLogger('simple_example')
-        self.logger.setLevel(logging.INFO)
-        self.formatter = logging.Formatter('%(message)s')
-        self.handler = logging.FileHandler("jugadas.log","w")
-        self.logger.addHandler(self.handler)
 
     def main(self):
         pygame.init()
         self.start()
         dragging = False
         self.leer()
-        read_mode = True
-        if read_mode:
+        if self.read_mode:
             self.test()
         while True:
             self.turno(self.blancas,self.negras)
@@ -44,9 +40,6 @@ class Partida():
         while sigue_mi_turno:
             for event in pygame.event.get():
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    print("********************")
-                    print(event.pos)
-                    print(self.centrar(event.pos))
                     sprite = jugador.click(event.pos)
                     if sprite:
                         dragging = True
@@ -61,6 +54,7 @@ class Partida():
                         else:
                             desde = sprite.pos
                             sigue_mi_turno = sprite.try_move(self.centrar(event.pos), oponente)
+                    self.blancas.check_piezas()
                 elif event.type == pygame.MOUSEMOTION:
                     if dragging:
                         sprite.rect.center=event.pos
@@ -70,10 +64,14 @@ class Partida():
             if dragging:
                 sprite.show_moves(self.screen)
             if not sigue_mi_turno:
-                self.logger.info(f"{desde[0]},{desde[1]} {self.centrar(event.pos)[0]},{self.centrar(event.pos)[1]}")
+                self.logger.info(f"{desde[0]}, {desde[1]} {self.centrar(event.pos)[0]}, {self.centrar(event.pos)[1]}")
             pygame.display.flip()
 
     def start(self):
+        self.logger.setLevel(logging.INFO)
+        logging.Formatter('%(message)s')
+        handler = logging.FileHandler("jugadas.log","w")
+        self.logger.addHandler(handler)
         self.screen = pygame.display.set_mode(self.size)
         tablero_virtual = self.crear_tablero()
         self.tablero_sprite =  pygame.image.load(os.path.join(self.BASE_image, "tablero.jpg")).convert()
@@ -126,7 +124,6 @@ class Partida():
         y = (9-pos[1])*self.cas_y-self.center_y
         return (int(x),int(y))
 
-
     def leer(self):
         jugadas = []
         f = open("jugadas2.log","r")
@@ -139,11 +136,9 @@ class Partida():
         pos = self.leer()
         turno_blancas = True
         for i in range(len(pos)):
-            print(pos[i])
             if turno_blancas:
                 sprite = self.blancas.click(self.int_to_pix(pos[i][0]))
                 sprite.pos_moves()
-                print(sprite.moves)
                 sprite.try_move(pos[i][1], self.negras)
                 turno_blancas = False
             else:
@@ -153,8 +148,8 @@ class Partida():
             self.screen.blit(self.tablero_sprite,self.tablero_sprite.get_rect())
             self.negras.draw(self.screen)
             self.blancas.draw(self.screen)
+            self.blancas.check_piezas()
             pygame.display.flip()
-            time.sleep(2)
 
 class Jugador(pygame.sprite.Group):
 
@@ -179,15 +174,22 @@ class Jugador(pygame.sprite.Group):
     def b_to_n(self, pos):
         return pos[0],9-pos[1]
 
+    def check_piezas(self):
+        for pos in self.tablero_virtual:
+            if self.tablero_virtual[pos]["pieza"] != None:
+                if len(self.tablero_virtual[pos]["pieza"].groups())< 1:
+                    print(self.tablero_virtual[pos])
+                    print(pos)
+
 class Pieza(pygame.sprite.Sprite):
 
-    def __init__(self, image,pos=(0,0),moves=[(1,1)]):
+    def __init__(self, image,pos=(0,0)):
 
         pygame.sprite.Sprite.__init__(self)
         self.image = image
         self.rect = image.get_rect()
         self.pos = pos
-        self.moves = moves[:]
+        self.moves = []
         self.special_moves = {}
         self.it_move = False 
         self.en_pass = False
@@ -196,7 +198,7 @@ class Pieza(pygame.sprite.Sprite):
         self.groups()[0].tablero_virtual[self.pos]["pieza"] = None
         pieza_atacada = self.groups()[0].tablero_virtual[new_pos]["pieza"] 
         self.groups()[0].tablero_virtual[new_pos]["pieza"] = self
-        self.check_jaque(oponente)
+        self.check_jaque(oponente, pieza_atacada)
         if can_move and not self.groups()[0].jaque:
             oponente.flip_the_table(self.groups()[0].tablero_virtual)
             self.pos = new_pos
@@ -224,7 +226,7 @@ class Pieza(pygame.sprite.Sprite):
             R = pygame.Rect( 0,0, 1860/8,int(1055/8))
             R.center = self.groups()[0].tablero_virtual[pos]['pos']
             screen.blit(shape_surf,(R.left+8,R.top+5,R.width, R.height))
-    
+
     def try_move(self, new_pos, oponente):
         if new_pos != self.pos:
             can_move = new_pos in self.moves
@@ -234,16 +236,18 @@ class Pieza(pygame.sprite.Sprite):
                 return False
         return True
 
-    def can_kill(self, pos, moves):
+    def can_kill(self, pos):
         pieza = self.groups()[0].tablero_virtual[pos]['pieza']
         if pieza.groups()[0].color!=self.groups()[0].color:
-            moves.append(pos)
+            self.moves.append(pos)
             if isinstance(pieza, Rey):
                 pieza.groups()[0].jaque = True
     
-    def check_jaque(self, oponente):
+    def check_jaque(self, oponente, pieza_atacada):
+        self.groups()[0].jaque = False
         for sprite in oponente.sprites():
-            sprite.pos_moves()
+            if sprite is not pieza_atacada:
+                sprite.pos_moves()
 
 class Torre(Pieza):
 
@@ -251,35 +255,31 @@ class Torre(Pieza):
         self.moves = []
         for i in range(self.pos[1]+1,9):
             if not self.groups()[0].tablero_virtual[(self.pos[0],self.pos[1]+i)]["pieza"] == None:
-                self.can_kill((self.pos[0],self.pos[1]+i),self.moves)
+                self.can_kill((self.pos[0],self.pos[1]+i))
                 break
             self.moves.append((self.pos[0],self.pos[1]+i))
 
         for i in range(self.pos[1]-1,0, -1):
             if not self.groups()[0].tablero_virtual[(self.pos[0],i)]["pieza"] == None:
-                self.can_kill((self.pos[0],i),self.moves)
+                self.can_kill((self.pos[0],i))
                 break
             self.moves.append((self.pos[0],i))
 
         for i in range(self.pos[0]+1,9):
             if not self.groups()[0].tablero_virtual[(i,self.pos[1])]["pieza"] == None:
-                self.can_kill((i,self.pos[1]),self.moves)
+                self.can_kill((i,self.pos[1]))
                 break
             self.moves.append((i,self.pos[1]))
 
         for i in range(self.pos[0]-1,0,-1):
             if not self.groups()[0].tablero_virtual[(i,self.pos[1])]["pieza"] == None:
-                self.can_kill((i,self.pos[1]),self.moves)
+                self.can_kill((i,self.pos[1]))
                 break
             self.moves.append((i,self.pos[1]))
 
 class Peon(Pieza):
 
-
     def try_move(self, new_pos, oponente):
-        print("**********************************************")
-        print(new_pos)
-        print(self.special_moves)
         np = (self.pos[0],self.pos[1]+2)
         if new_pos != self.pos:
             if new_pos in self.special_moves:
@@ -307,8 +307,9 @@ class Peon(Pieza):
         self.groups()[0].tablero_virtual[self.pos]["pieza"] = None
         pieza_atacada = self.groups()[0].tablero_virtual[pos_pieza]["pieza"] 
         self.groups()[0].tablero_virtual[new_pos]["pieza"] = self
-        self.check_jaque(oponente)
+        self.check_jaque(oponente,pieza_atacada)
         if not self.groups()[0].jaque:
+            self.groups()[0].tablero_virtual[pos_pieza]["pieza"] = None
             oponente.flip_the_table(self.groups()[0].tablero_virtual)
             self.pos = new_pos
             if pieza_atacada != None:
@@ -326,10 +327,10 @@ class Peon(Pieza):
         self.moves = []
 
         if (self.pos[0]+1 < 9) and self.groups()[0].tablero_virtual[(self.pos[0]+1,self.pos[1]+1)]["pieza"] != None:
-            self.can_kill((self.pos[0]+1,self.pos[1]+1),self.moves)
+            self.can_kill((self.pos[0]+1,self.pos[1]+1))
 
         if (self.pos[0]-1 > 0) and self.groups()[0].tablero_virtual[(self.pos[0]-1,self.pos[1]+1)]["pieza"] != None:
-            self.can_kill((self.pos[0]-1,self.pos[1]+1),self.moves)
+            self.can_kill((self.pos[0]-1,self.pos[1]+1))
 
         if self.groups()[0].tablero_virtual[(self.pos[0],self.pos[1]+1)]["pieza"] == None:
             self.moves.append((self.pos[0],self.pos[1]+1))
@@ -363,28 +364,28 @@ class Alfil(Pieza):
         #Diagonal izquierda hacia adelante
         for i in range(1,9-max_pos):
             if not self.groups()[0].tablero_virtual[(self.pos[0]+i,self.pos[1]+i)]["pieza"] == None:
-                self.can_kill((self.pos[0]+i,self.pos[1]+i),self.moves)
+                self.can_kill((self.pos[0]+i,self.pos[1]+i))
                 break
             self.moves.append((self.pos[0]+i,self.pos[1]+i))
 
         #Diagonal izquierda hacia atras
         for i in range(1,min_pos):
             if not self.groups()[0].tablero_virtual[(self.pos[0]-i,self.pos[1]-i)]["pieza"] == None:
-                self.can_kill((self.pos[0]-i,self.pos[1]-i),self.moves)
+                self.can_kill((self.pos[0]-i,self.pos[1]-i))
                 break
             self.moves.append((self.pos[0]-i,self.pos[1]-i))
 
         #Diagonal derecha hacia adelante
         for i in range(1,max_max):
             if not self.groups()[0].tablero_virtual[(self.pos[0]-i,self.pos[1]+i)]["pieza"] == None:
-                self.can_kill((self.pos[0]-i,self.pos[1]+i),self.moves)
+                self.can_kill((self.pos[0]-i,self.pos[1]+i))
                 break
             self.moves.append((self.pos[0]-i,self.pos[1]+i))
 
         #Diagonal derecha hacia atras
         for i in range(1,min_min):
             if not self.groups()[0].tablero_virtual[(self.pos[0]+i,self.pos[1]-i)]["pieza"] == None:
-                self.can_kill((self.pos[0]+i,self.pos[1]-i),self.moves)
+                self.can_kill((self.pos[0]+i,self.pos[1]-i))
                 break
             self.moves.append((self.pos[0]+i,self.pos[1]-i))
 
@@ -402,24 +403,24 @@ class Reina(Pieza):
         
         for i in range(1,9-max_pos):
             if not self.groups()[0].tablero_virtual[(self.pos[0]+i,self.pos[1]+i)]["pieza"] == None:
-                self.can_kill((self.pos[0]+i,self.pos[1]+i),self.moves)
+                self.can_kill((self.pos[0]+i,self.pos[1]+i))
                 break
             self.moves.append((self.pos[0]+i,self.pos[1]+i))
         
         for i in range(1,min_pos):
             if not self.groups()[0].tablero_virtual[(self.pos[0]-i,self.pos[1]-i)]["pieza"] == None:
-                self.can_kill((self.pos[0]-i,self.pos[1]-i),self.moves)
+                self.can_kill((self.pos[0]-i,self.pos[1]-i))
                 break
             self.moves.append((self.pos[0]-i,self.pos[1]-i))
 
         for i in range(1,min_min):
             if not self.groups()[0].tablero_virtual[(self.pos[0]+i,self.pos[1]-i)]["pieza"] == None:
-                self.can_kill((self.pos[0]+i,self.pos[1]-i),self.moves)
+                self.can_kill((self.pos[0]+i,self.pos[1]-i))
                 break
             self.moves.append((self.pos[0]+i,self.pos[1]-i))
         for i in range(1,max_max):
             if not self.groups()[0].tablero_virtual[(self.pos[0]-i,self.pos[1]+i)]["pieza"] == None:
-                self.can_kill((self.pos[0]-i,self.pos[1]+i),self.moves)
+                self.can_kill((self.pos[0]-i,self.pos[1]+i))
                 break
             self.moves.append((self.pos[0]-i,self.pos[1]+i))
         
@@ -427,25 +428,25 @@ class Reina(Pieza):
         
         for i in range(self.pos[1]+1,9):
             if not self.groups()[0].tablero_virtual[(self.pos[0],i)]["pieza"] == None:
-                self.can_kill((self.pos[0],i),self.moves)
+                self.can_kill((self.pos[0],i))
                 break
             self.moves.append((self.pos[0],i))
 
         for i in range(self.pos[1]-1,0, -1):
             if not self.groups()[0].tablero_virtual[(self.pos[0],i)]["pieza"] == None:
-                self.can_kill((self.pos[0],i),self.moves)
+                self.can_kill((self.pos[0],i))
                 break
             self.moves.append((self.pos[0],i))
 
         for i in range(1+self.pos[0],9):
             if not self.groups()[0].tablero_virtual[(i,self.pos[1])]["pieza"] == None:
-                self.can_kill((i,self.pos[1]),self.moves)
+                self.can_kill((i,self.pos[1]))
                 break
             self.moves.append((i,self.pos[1]))
 
         for i in range(self.pos[0]-1,0,-1):
             if not self.groups()[0].tablero_virtual[(i,self.pos[1])]["pieza"] == None:
-                self.can_kill((i,self.pos[1]),self.moves)
+                self.can_kill((i,self.pos[1]))
                 break
             self.moves.append((i,self.pos[1]))
 
@@ -453,14 +454,66 @@ class Rey(Pieza):
 
     def pos_moves(self):
         self.moves = []
+        self.special_moves = {}
         for i in [-1,0,1]:
             for j in [-1,0,1]:
                 move = (self.pos[0]+i,self.pos[1]+j)
                 if min(move)>0 and max(move)<9:
                     if self.groups()[0].tablero_virtual[move]["pieza"] != None:
-                        self.can_kill(move,self.moves)
+                        self.can_kill(move)
                     else:
                         self.moves.append(move)
+        if not self.it_move:
+            self.check_rock()
+
+    def check_rock(self):
+        cond_1 = self.groups()[0].tablero_virtual[(self.pos[0]-1,self.pos[1])]["pieza"] == None
+        cond_2 = self.groups()[0].tablero_virtual[(self.pos[0]-2,self.pos[1])]["pieza"] == None
+        cond_3 = self.groups()[0].tablero_virtual[(self.pos[0]-3,self.pos[1])]["pieza"] == None
+        if self.groups()[0].tablero_virtual[(self.pos[0]-4,self.pos[1])]["pieza"]:
+            cond_4 = not self.groups()[0].tablero_virtual[(self.pos[0]-4,self.pos[1])]["pieza"].it_move
+            if cond_1 and cond_2 and cond_3 and cond_4:
+                self.special_moves[(self.pos[0]-2,self.pos[1])] = [(self.pos[0]-4,self.pos[1]), (self.pos[0]-1,self.pos[1])]
+        cond_1 = self.groups()[0].tablero_virtual[(self.pos[0]+1,self.pos[1])]["pieza"] == None
+        cond_2 = self.groups()[0].tablero_virtual[(self.pos[0]+2,self.pos[1])]["pieza"] == None
+        if self.groups()[0].tablero_virtual[(self.pos[0]+3,self.pos[1])]["pieza"]:
+            cond_3 = not self.groups()[0].tablero_virtual[(self.pos[0]+3,self.pos[1])]["pieza"].it_move
+            if cond_1 and cond_2 and cond_3:
+                print(self.special_moves)
+                self.special_moves[(self.pos[0]+2,self.pos[1])] = [(self.pos[0]+3,self.pos[1]), (self.pos[0]+1,self.pos[1])]
+
+    def try_move(self, new_pos, oponente):
+        if new_pos != self.pos:
+            if new_pos in self.special_moves:
+                self.special_move(new_pos,oponente)
+            else:
+                can_move = new_pos in self.moves
+                self.move(new_pos,can_move, oponente)
+            if new_pos == self.pos:
+                if self.groups()[0].en_pass:
+                    self.groups()[0].en_pass = False
+                    for sprite in self.groups()[0].sprites():
+                        sprite.en_pass = False
+                if not self.it_move:
+                    self.it_move = True
+                self.pos_moves()
+                return False
+        return True  
+
+    def special_move(self,new_pos,oponente):
+        old_r_pos = self.special_moves[new_pos][0]
+        new_r_pos = self.special_moves[new_pos][1]
+        rock = self.groups()[0].tablero_virtual[old_r_pos]["pieza"]
+        self.groups()[0].tablero_virtual[self.pos]["pieza"] = None
+        self.groups()[0].tablero_virtual[new_pos]["pieza"] = self
+        self.groups()[0].tablero_virtual[old_r_pos]["pieza"] = None
+        self.groups()[0].tablero_virtual[new_r_pos]["pieza"] = rock
+        oponente.flip_the_table(self.groups()[0].tablero_virtual)
+        self.pos = new_pos
+        rock.pos = new_r_pos
+        self.rect.center=self.groups()[0].tablero_virtual[new_pos]["pos"]
+        rock.rect.center=self.groups()[0].tablero_virtual[new_r_pos]["pos"]
+
         
 class Caballo(Pieza):
 
@@ -469,10 +522,7 @@ class Caballo(Pieza):
         pos_moves = [(self.pos[0]+p,self.pos[1]+j) for j in [-2,2] for p in [-1,1]] + [(self.pos[0]+p,self.pos[1]+j) for p in [-2,2] for j in [-1,1]]
         for move in pos_moves:
             if min(move)>0 and max(move)<9:
-                #try:
                 if self.groups()[0].tablero_virtual[move]["pieza"] != None:
-                    self.can_kill(move,self.moves)
+                    self.can_kill(move)
                 else:
                     self.moves.append(move)
-                #except:
-                #    pass

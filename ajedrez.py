@@ -2,5 +2,5 @@ import os, sys, pygame, math
 from clases import Partida
 
 
-partida = Partida()
+partida = Partida(False)
 partida.main()  
